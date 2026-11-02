@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Tale-Weaver's Dice | 故事骰子 3D 官方體驗與專案平台</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Fredoka:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #fff5f7;
+            color: #334155;
+        }
+
+        .font-cinzel {
+            font-family: 'Cinzel', serif;
+        }
+
+        /* Hero Glow Effects - Pink Theme */
+        .hero-glow {
+            background: radial-gradient(circle at 50% 30%, rgba(251, 113, 133, 0.2) 0%, rgba(244, 114, 182, 0.15) 35%, rgba(255, 245, 247, 0) 70%);
+        }
+
+        /* Glassmorphic Elements Light Theme */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(244, 114, 182, 0.25);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(251, 113, 133, 0.2);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            border-color: rgba(244, 114, 182, 0.6);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px -10px rgba(244, 114, 182, 0.25);
+        }
+
+        /* 3D Dice Stage Styles */
+        .dice-scene {
+            perspective: 1000px;
+            width: 110px;
+            height: 110px;
+            margin: 12px;
+        }
+        @media (min-width: 640px) {
+            .dice-scene {
+                width: 130px;
+                height: 130px;
+                margin: 18px;
+            }
+        }
+
+        .cube {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1.5s cubic-bezier(0.2, 0.85, 0.25, 1.2);
+            cursor: pointer;
+        }
+
+        .cube-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, #ffffff, #fff1f2);
+            border: 3px solid #fecdd3;
+            border-radius: 22px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 12px rgba(244, 114, 182, 0.15), 0 8px 20px rgba(225, 29, 72, 0.12);
+            backface-visibility: hidden;
+            user-select: none;
+            color: #881337;
+        }
+
+        .cube:hover .cube-face {
+            border-color: #f472b6;
+        }
+
+        .face-front  { transform: rotateY(0deg) translateZ(55px); }
+        .face-back   { transform: rotateY(180deg) translateZ(55px); }
+        .face-right  { transform: rotateY(90deg) translateZ(55px); }
+        .face-left   { transform: rotateY(-90deg) translateZ(55px); }
+        .face-top    { transform: rotateX(90deg) translateZ(55px); }
+        .face-bottom { transform: rotateX(-90deg) translateZ(55px); }
+
+        @media (min-width: 640px) {
+            .face-front  { transform: rotateY(0deg) translateZ(65px); }
+            .face-back   { transform: rotateY(180deg) translateZ(65px); }
+            .face-right  { transform: rotateY(90deg) translateZ(65px); }
+            .face-left   { transform: rotateY(-90deg) translateZ(65px); }
+            .face-top    { transform: rotateX(90deg) translateZ(65px); }
+            .face-bottom { transform: rotateX(-90deg) translateZ(65px); }
+        }
+
+        /* Gradient Text */
+        .text-gradient-pink {
+            background: linear-gradient(135deg, #e11d48 0%, #db2777 50%, #c026d3 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .text-gradient-gold {
+            background: linear-gradient(135deg, #e11d48 0%, #f43f5e 50%, #fb7185 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #fff1f2;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #f472b6;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #e11d48;
+        }
+    </style>
+</head>
+<body class="bg-rose-50/50 text-slate-700 min-h-screen selection:bg-rose-400 selection:text-white">
+
+    <!-- Navigation Header -->
+    <nav class="fixed top-0 left-0 w-full z-50 glass-panel border-b border-rose-200/60 px-4 sm:px-8 py-3.5">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <a href="#" class="flex items-center gap-3 group">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-400 via-pink-500 to-purple-500 flex items-center justify-center shadow-lg shadow-rose-300/40 group-hover:scale-105 transition">
+                    <i class="fa-solid fa-dice-d6 text-xl text-white"></i>
+                </div>
+                <div>
+                    <span class="font-cinzel text-lg font-bold text-gradient-pink tracking-wider block leading-tight">THE TALE-WEAVER</span>
+                    <span class="text-[10px] text-rose-500 font-semibold tracking-widest uppercase">3D Story Dice Platform</span>
+                </div>
+            </a>
+
+            <!-- Nav Links -->
+            <div class="hidden md:flex items-center space-x-8 text-sm font-semibold text-slate-600">
+                <a href="#hero" class="hover:text-rose-500 transition">首頁封面</a>
+                <a href="#game-play" class="hover:text-pink-600 transition">遊戲體驗</a>
+                <a href="#analysis" class="hover:text-purple-600 transition">專案分析</a>
+                <a href="#polls" class="hover:text-rose-600 transition">社群投票</a>
+            </div>
+
+            <!-- CTA Action Button -->
+            <a href="#game-play" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-400 via-pink-500 to-purple-500 text-white font-bold text-xs sm:text-sm shadow-md shadow-pink-300/50 hover:opacity-95 transition transform active:scale-95">
+                <i class="fa-solid fa-play mr-1.5"></i> 立即擲骰
+            </a>
+        </div>
+    </nav>
+
+    <!-- SECTION 1: Hero Banner -->
+    <section id="hero" class="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden hero-glow border-b border-rose-200/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center max-w-4xl mx-auto space-y-6">
+                
+                <!-- Badge -->
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 border border-rose-300 text-rose-600 text-xs font-bold tracking-wide shadow-sm">
+                    <i class="fa-solid fa-sparkles text-rose-400"></i>
+                    <span>全互動寫作與靈感啟發平台</span>
+                </div>
+
+                <!-- Hero Title -->
+                <h1 class="font-cinzel text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-gradient-pink leading-tight">
+                    THE TALE-WEAVER'S DICE
+                </h1>
+                
+                <!-- Subtitle -->
+                <p class="text-lg sm:text-2xl text-slate-600 font-normal max-w-2xl mx-auto leading-relaxed">
+                    轉動粉甜骰子，喚醒創作靈感。一鍵開啟無限想像的浪漫冒險！
+                </p>
+
+                <!-- Feature Pills -->
+                <div class="pt-4 flex flex-wrap justify-center gap-4 text-xs sm:text-sm text-slate-600 font-medium">
+                    <span class="flex items-center gap-2 bg-white/80 px-3.5 py-1.5 rounded-lg border border-rose-200 shadow-sm"><i class="fa-solid fa-cube text-rose-400"></i> CSS 3D 擬真物理視角</span>
+                    <span class="flex items-center gap-2 bg-white/80 px-3.5 py-1.5 rounded-lg border border-rose-200 shadow-sm"><i class="fa-solid fa-wand-magic-sparkles text-pink-400"></i> 多主題故事卡組</span>
+                    <span class="flex items-center gap-2 bg-white/80 px-3.5 py-1.5 rounded-lg border border-rose-200 shadow-sm"><i class="fa-solid fa-feather-pointed text-purple-400"></i> 一站式創作畫布</span>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="pt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <a href="#game-play" class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-rose-400 via-pink-500 to-purple-500 text-white font-bold text-base shadow-lg shadow-pink-300/50 hover:shadow-pink-400/60 hover:scale-105 transition duration-300 flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-dice text-xl animate-bounce"></i>
+                        <span>進入 3D 故事骰子遊戲</span>
+                    </a>
+                    <a href="#analysis" class="w-full sm:w-auto px-7 py-4 rounded-2xl bg-white hover:bg-rose-50 text-slate-700 border border-rose-200 font-bold text-base transition flex items-center justify-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-chart-pie text-pink-500"></i>
+                        <span>查看專案亮點與分析</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Floating Decorative Banner Frame -->
+            <div class="mt-16 relative rounded-3xl overflow-hidden border border-rose-200/80 shadow-xl bg-white/80 max-w-5xl mx-auto">
+                <div class="absolute inset-0 bg-gradient-to-tr from-rose-100/40 via-pink-100/30 to-purple-100/40 pointer-events-none"></div>
+                
+                <div class="p-8 sm:p-12 text-center relative z-10 flex flex-col items-center">
+                    <div class="w-16 h-16 mb-4 rounded-2xl bg-rose-100 border border-rose-300 flex items-center justify-center shadow-md">
+                        <i class="fa-solid fa-book-bookmark text-3xl text-rose-500"></i>
+                    </div>
+                    <h3 class="font-cinzel text-2xl sm:text-3xl font-bold text-slate-800 mb-2">Unleash Your Imagination, One Roll at a Time</h3>
+                    <p class="text-xs sm:text-sm text-slate-500 max-w-xl">
+                        結合粉嫩視覺圖示刺激與動態滾動體驗，故事骰子是創作者、教學者與腦力激盪愛好的最佳輔助工具。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 2: 3D Story Dice Interactive App -->
+    <section id="game-play" class="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div class="text-center mb-10">
+            <h2 class="text-3xl sm:text-4xl font-bold text-slate-800 flex items-center justify-center gap-3">
+                <i class="fa-solid fa-gamepad text-rose-400"></i> 3D 故事骰子遊戲平台
+            </h2>
+            <p class="text-sm text-slate-500 mt-2">點擊骰子或下方按鈕進行滾動，探索靈感組合並進行線上創作！</p>
+        </div>
+
+        <!-- Embedded Interactive App Window -->
+        <div class="glass-panel p-4 sm:p-8 rounded-3xl border border-rose-200 shadow-xl">
+            
+            <!-- Header Controls Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-rose-100">
+                <!-- Theme Select -->
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+                    <label class="text-xs font-bold text-slate-600 flex items-center gap-1.5 whitespace-nowrap">
+                        <i class="fa-solid fa-layer-group text-pink-500"></i> 切換主題庫：
+                    </label>
+                    <select id="themeSelect" onchange="changeTheme(this.value)" class="bg-white text-sm text-slate-700 border border-rose-200 rounded-xl px-3.5 py-2 outline-none focus:border-pink-400 transition w-full sm:w-auto shadow-sm">
+                        <option value="weather">🌦️ 天氣與自然 (Weather & Nature)</option>
+                        <option value="fantasy">⚔️ 奇幻冒險 (Fantasy Adventure)</option>
+                        <option value="emotions">❤️ 情感與生活 (Emotions & Life)</option>
+                        <option value="characters">🦉 角色與遭遇 (Characters & Encounters)</option>
+                    </select>
+                </div>
+
+                <!-- Dice Count & Audio Actions -->
+                <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                    <div class="flex items-center space-x-1 bg-rose-50/80 p-1 rounded-xl border border-rose-200">
+                        <span class="text-xs text-rose-700 px-2 font-semibold">數量:</span>
+                        <button onclick="setDiceCount(1)" id="btn-count-1" class="dice-count-btn px-2.5 py-1 rounded-lg text-xs font-bold text-rose-500 hover:text-rose-700 transition">1</button>
+                        <button onclick="setDiceCount(2)" id="btn-count-2" class="dice-count-btn px-2.5 py-1 rounded-lg text-xs font-bold text-rose-500 hover:text-rose-700 transition">2</button>
+                        <button onclick="setDiceCount(3)" id="btn-count-3" class="dice-count-btn px-2.5 py-1 rounded-lg text-xs font-bold text-rose-500 hover:text-rose-700 transition">3</button>
+                        <button onclick="setDiceCount(4)" id="btn-count-4" class="dice-count-btn px-2.5 py-1 rounded-lg text-xs font-bold text-rose-500 hover:text-rose-700 transition">4</button>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <button id="soundToggleBtn" onclick="toggleSound()" class="p-2.5 rounded-xl bg-white hover:bg-rose-50 text-slate-600 border border-rose-200 shadow-sm transition" title="切換音效">
+                            <i id="soundIcon" class="fa-solid fa-volume-high text-rose-400"></i>
+                        </button>
+                        <button onclick="openCustomModal()" class="px-3.5 py-2 rounded-xl bg-white hover:bg-rose-50 border border-rose-200 text-xs sm:text-sm font-bold text-slate-700 shadow-sm transition flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-pink-500"></i>
+                            <span>自訂圖示</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Interactive App Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-6">
+                
+                <!-- Left Column: 3D Stage & Rolled Hints -->
+                <div class="lg:col-span-7 flex flex-col space-y-6">
+                    <!-- 3D Stage -->
+                    <div class="bg-gradient-to-b from-rose-50/70 to-pink-50/70 p-6 sm:p-10 rounded-3xl border border-rose-200/80 flex flex-col items-center justify-center min-h-[320px] relative overflow-hidden shadow-inner">
+                        <div class="absolute -top-24 -left-24 w-60 h-60 bg-pink-300/20 rounded-full blur-3xl pointer-events-none"></div>
+                        <div class="absolute -bottom-24 -right-24 w-60 h-60 bg-rose-300/20 rounded-full blur-3xl pointer-events-none"></div>
+
+                        <div id="diceGrid" class="flex flex-wrap items-center justify-center gap-2 sm:gap-6 z-10 my-4">
+                            <!-- Cubes generated via JS -->
+                        </div>
+
+                        <div class="mt-6 z-10 w-full max-w-xs">
+                            <button id="rollBtn" onclick="rollAllDice()" class="w-full py-4 px-6 bg-gradient-to-r from-rose-400 via-pink-500 to-purple-400 hover:opacity-95 text-white font-bold text-lg rounded-2xl shadow-lg shadow-pink-300/50 transform hover:-translate-y-0.5 active:translate-y-0 transition flex items-center justify-center gap-3">
+                                <i class="fa-solid fa-dice text-2xl"></i>
+                                <span>擲出故事骰子 !</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Rolled Result Cards -->
+                    <div class="bg-white/80 p-5 rounded-2xl border border-rose-200 shadow-sm">
+                        <h3 class="text-xs uppercase tracking-wider font-bold text-rose-500 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles text-pink-400"></i> 本次擲出的故事元素解讀
+                        </h3>
+                        <div id="resultCards" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <!-- Rolled face hints dynamically rendered here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Story Editor Canvas -->
+                <div class="lg:col-span-5 flex flex-col">
+                    <div class="bg-white/90 p-5 sm:p-6 rounded-3xl border border-rose-200 flex-1 flex flex-col space-y-4 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-pen-nib text-rose-400 text-lg"></i>
+                                <h3 class="text-lg font-bold text-slate-800">故事創作畫布</h3>
+                            </div>
+                            <button onclick="clearStory()" class="text-xs text-slate-400 hover:text-rose-500 transition flex items-center gap-1 font-semibold">
+                                <i class="fa-solid fa-rotate-left"></i> 清空
+                            </button>
+                        </div>
+
+                        <div class="bg-pink-50 border border-pink-200 rounded-xl p-3 text-xs text-rose-700 leading-relaxed flex items-start gap-2">
+                            <i class="fa-solid fa-lightbulb text-amber-500 text-sm mt-0.5"></i>
+                            <span>嘗試將上方擲出的每一個圖示作為劇情轉折關鍵字，組合成一篇流暢的短篇故事！</span>
+                        </div>
+
+                        <textarea id="storyTextArea" placeholder="從前從前..." class="w-full h-48 sm:h-64 lg:h-full p-4 bg-rose-50/30 border border-rose-200 rounded-2xl text-slate-700 placeholder-slate-400 focus:outline-none focus:border-pink-400 leading-relaxed resize-none transition text-sm shadow-inner"></textarea>
+
+                        <div class="flex items-center gap-3 pt-2">
+                            <button onclick="copyStory()" class="flex-1 py-2.5 px-4 bg-white hover:bg-rose-50 text-slate-700 text-xs sm:text-sm font-bold rounded-xl border border-rose-200 shadow-sm transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-copy text-rose-400"></i> 複製文章
+                            </button>
+                            <button onclick="downloadStory()" class="flex-1 py-2.5 px-4 bg-white hover:bg-rose-50 text-slate-700 text-xs sm:text-sm font-bold rounded-xl border border-rose-200 shadow-sm transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-file-arrow-down text-pink-400"></i> 下載 `.txt`
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 3: Project Analysis & Differentiation -->
+    <section id="analysis" class="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-rose-200/60">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <h2 class="text-3xl sm:text-4xl font-bold text-slate-800 mb-4">
+                專案分析與市場差異 (Project Analysis)
+            </h2>
+            <p class="text-slate-600 text-sm sm:text-base">
+                全面評估當前設計的技術與體驗優勢、潛在改進空間，以及與市面上傳統線上隨機骰子的亮點比較。
+            </p>
+        </div>
+
+        <!-- Advantages & Disadvantages Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+            <!-- Pros -->
+            <div class="glass-card p-6 sm:p-8 rounded-3xl border-t-4 border-t-emerald-400 shadow-md">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800">核心優勢 (Advantages)</h3>
+                </div>
+                <ul class="space-y-4 text-xs sm:text-sm text-slate-600">
+                    <li class="flex items-start gap-3">
+                        <i class="fa-solid fa-cube text-emerald-500 mt-1"></i>
+                        <div>
+                            <strong class="text-slate-800 block mb-0.5">3D 擬真視覺與即時音效反饋</strong>
+                            採用 CSS 3D Transform 多圈翻轉與擬真減速，結合原生 Web Audio 程式化撞擊音效，極具儀式感。
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fa-solid fa-pen-ruler text-emerald-500 mt-1"></i>
+                        <div>
+                            <strong class="text-slate-800 block mb-0.5">「一站式」創作成品閉環</strong>
+                            不只擲骰，更整合靈感引導卡與即時創作畫布，支援一鍵複製與匯出文字檔。
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fa-solid fa-sliders text-emerald-500 mt-1"></i>
+                        <div>
+                            <strong class="text-slate-800 block mb-0.5">多主題卡庫與彈性自訂六面</strong>
+                            內建 4 種常見情境主題（天氣、奇幻、情感、角色），並允許使用者自由替換 Icon 與關鍵字。
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fa-solid fa-bolt text-emerald-500 mt-1"></i>
+                        <div>
+                            <strong class="text-slate-800 block mb-0.5">單一檔案與輕量效能</strong>
+                            零安裝無外部影音載入門檻，開啟速度極快、資源耗用低，適應多種行動裝置。
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Cons -->
+            <div class="glass-card p-6 sm:p-8 rounded-3xl border-t-4 border-t-rose-400 shadow-md">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-500 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800">潛在改進空間 (Disadvantages)</h3>
+                </div>
+                <ul class="space-y-4 text-xs sm:text-sm text-slate-600">
+                    <li class="flex items-start gap-3">
+                        <i class="fa-solid fa-font-awesome text-rose-400 mt-1"></i>
+                        <div>
+                            <strong class="text-slate-800 block mb-0.5">自訂圖示具備基礎門檻</strong>
+                            目前自訂需要輸入 FontAwesome 代碼（如 `fa-dragon`），新手使用者可能需要點選清單輔助。
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fa-solid fa-atom text-rose-400 mt-1"></i>
+                        <div>
+                            <strong class="text-slate-800 block mb-0.5">非完全物理碰撞引擎</strong>
+                            動態為隨機角度角度動畫算式而非 Cannon.js 物理模擬，雖然效能高但落點呈現相對規律。
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fa-solid fa-cloud-arrow-down text-rose-400 mt-1"></i>
+                        <div>
+                            <strong class="text-slate-800 block mb-0.5">尚未整合雲端歷史紀錄</strong>
+                            目前草稿保存在當前瀏覽器視窗中，重整分頁前需手動下載文字檔保存。
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Differentiator Comparison Table -->
+        <div class="glass-panel rounded-3xl p-6 sm:p-8 border border-rose-200 shadow-md">
+            <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-code-compare text-pink-500"></i> 與市面上其他產品的不同之處
+            </h3>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs sm:text-sm text-slate-600 border-collapse">
+                    <thead>
+                        <tr class="border-b border-rose-200 text-rose-500 uppercase text-[11px] tracking-wider font-bold">
+                            <th class="py-3.5 px-4">比較項目</th>
+                            <th class="py-3.5 px-4">一般線上骰子 / 隨機抽卡工具</th>
+                            <th class="py-3.5 px-4 text-rose-600">本專案 (3D Story Dice)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-rose-100">
+                        <tr>
+                            <td class="py-4 px-4 font-bold text-slate-800">視覺呈現與動態</td>
+                            <td class="py-4 px-4">多為 2D 圖示平面隨機刷新。</td>
+                            <td class="py-4 px-4 text-slate-800 font-semibold bg-pink-50/50">原生 CSS 3D 立體旋轉骰子，具備視覺翻轉與陰影質感。</td>
+                        </tr>
+                        <tr>
+                            <td class="py-4 px-4 font-bold text-slate-800">創作介面整合</td>
+                            <td class="py-4 px-4">僅顯示結果，使用者需另開 Word 或筆記本寫作。</td>
+                            <td class="py-4 px-4 text-slate-800 font-semibold bg-pink-50/50">整合靈感提示與寫作畫布，邊看圖文邊創作，一鍵匯出。</td>
+                        </tr>
+                        <tr>
+                            <td class="py-4 px-4 font-bold text-slate-800">意涵輔助提示</td>
+                            <td class="py-4 px-4">僅給出抽象圖案，新手容易發呆無從下筆。</td>
+                            <td class="py-4 px-4 text-slate-800 font-semibold bg-pink-50/50">自動解析圖卡意涵（Hint），輔助快速建構故事轉折。</td>
+                        </tr>
+                        <tr>
+                            <td class="py-4 px-4 font-bold text-slate-800">技術載入資源</td>
+                            <td class="py-4 px-4">依賴大型 3D 繪圖庫或 MP3 音訊檔，載入較慢。</td>
+                            <td class="py-4 px-4 text-slate-800 font-semibold bg-pink-50/50">純原生 3D + Web Audio，零外部多媒體檔案，秒開即玩。</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- SECTION 4: Community Poll Questions -->
+    <section id="polls" class="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-rose-200/60">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <h2 class="text-3xl sm:text-4xl font-bold text-slate-800 mb-4">
+                <i class="fa-solid fa-square-poll-vertical text-rose-400"></i> 社群/使用者 5 大票選題目規劃
+            </h2>
+            <p class="text-slate-600 text-sm sm:text-base">
+                為蒐集使用者建議與產品後續叠代方向，規劃以下 5 大社群互動票選主題：
+            </p>
+        </div>
+
+        <!-- Poll Questions Cards Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <!-- Poll 1 -->
+            <div class="glass-card p-6 rounded-3xl flex flex-col justify-between shadow-sm">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-purple-100 text-purple-600 border border-purple-200">
+                        型態一：新主題需求
+                    </span>
+                    <h4 class="text-base font-bold text-slate-800 mt-4 mb-3">
+                        「下一個最希望新增的骰子主題是什麼？」
+                    </h4>
+                    <ul class="space-y-2 text-xs text-slate-600 mb-4">
+                        <li class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">1. 賽博龐克與科幻未來 🤖</li>
+                        <li class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">2. 校園日常生活與青春故事 🏫</li>
+                        <li class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">3. 神話傳說與怪談懸疑 👻</li>
+                        <li class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">4. 職場冒險與商業戰場 💼</li>
+                    </ul>
+                </div>
+                <p class="text-[11px] text-slate-500 pt-3 border-t border-rose-100 font-medium">
+                    <i class="fa-solid fa-bullseye text-purple-500 mr-1"></i> 目的：掌握圖示庫擴充的優先順序。
+                </p>
+            </div>
+
+            <!-- Poll 2 -->
+            <div class="glass-card p-6 rounded-3xl flex flex-col justify-between shadow-sm">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-pink-100 text-pink-600 border border-pink-200">
+                        型態二：功能優先級
+                    </span>
+                    <h4 class="text-base font-bold text-slate-800 mt-4 mb-3">
+                        「你覺得遊戲目前最需要優先加入哪一個新功能？」
+                    </h4>
+                    <ul class="space-y-2 text-xs text-slate-600 mb-4">
+                        <li class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">1. AI 故事開頭產生器 🤖</li>
+                        <li class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">2. 內建點選式圖示選擇器 🎨</li>
+                        <li class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">3. 雲端歷史紀錄與自動存檔 ☁️</li>
+                        <li class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">4. 允許上傳自訂圖片 🖼️</li>
+                    </ul>
+                </div>
+                <p class="text-[11px] text-slate-500 pt-3 border-t border-rose-100 font-medium">
+                    <i class="fa-solid fa-bullseye text-pink-500 mr-1"></i> 目的：確定後續技術開發的資源分配。
+                </p>
+            </div>
+
+            <!-- Poll 3 -->
+            <div class="glass-card p-6 rounded-3xl flex flex-col justify-between shadow-sm">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-rose-100 text-rose-600 border border-rose-200">
+                        型態三：寫作玩法
+                    </span>
+                    <h4 class="text-base font-bold text-slate-800 mt-4 mb-3">
+                        「如果加入寫作挑戰模式，你最想體驗哪一種？」
+                    </h4>
+                    <ul class="space-y-2 text-xs text-slate-600 mb-4">
+                        <li class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">1. 3 分鐘限時極速寫作 ⏱️</li>
+                        <li class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">2. 指定結局大反轉 🔄</li>
+                        <li class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">3. 每日全網同台寫作牆 🧱</li>
+                        <li class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">4. 雙人故事接龍模式 👥</li>
+                    </ul>
+                </div>
+                <p class="text-[11px] text-slate-500 pt-3 border-t border-rose-100 font-medium">
+                    <i class="fa-solid fa-bullseye text-rose-500 mr-1"></i> 目的：發掘遊戲化玩法以提升黏著度。
+                </p>
+            </div>
+
+            <!-- Poll 4 -->
+            <div class="glass-card p-6 rounded-3xl flex flex-col justify-between shadow-sm">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-amber-100 text-amber-700 border border-amber-200">
+                        型態四：視覺風格
+                    </span>
+                    <h4 class="text-base font-bold text-slate-800 mt-4 mb-3">
+                        「你最喜歡哪一種骰子與介面的視覺主題風格？」
+                    </h4>
+                    <ul class="space-y-2 text-xs text-slate-600 mb-4">
+                        <li class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">1. 粉紅馬卡龍甜美風格 🌸 (當前)</li>
+                        <li class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">2. 復古羊皮紙與中古世紀 📜</li>
+                        <li class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">3. 溫暖木質與手繪繪本 🎨</li>
+                        <li class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">4. 8-Bit 像素懷舊電玩風 🎮</li>
+                    </ul>
+                </div>
+                <p class="text-[11px] text-slate-500 pt-3 border-t border-rose-100 font-medium">
+                    <i class="fa-solid fa-bullseye text-amber-500 mr-1"></i> 目的：評估主題面板 (Skins) 開發意願。
+                </p>
+            </div>
+
+            <!-- Poll 5 -->
+            <div class="glass-card p-6 rounded-3xl flex flex-col justify-between md:col-span-2 lg:col-span-1 shadow-sm">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-100 text-emerald-600 border border-emerald-200">
+                        型態五：社群活動
+                    </span>
+                    <h4 class="text-base font-bold text-slate-800 mt-4 mb-3">
+                        「如果舉辦『故事骰子創作大賽』，你最看重哪種獎勵？」
+                    </h4>
+                    <ul class="space-y-2 text-xs text-slate-600 mb-4">
+                        <li class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">1. 社群票選人氣獎（展示於首頁範例）🏆</li>
+                        <li class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">2. 客製化實體故事骰子周邊 🎲</li>
+                        <li class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">3. 資深創作者或評審個別點評 ✍️</li>
+                        <li class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">4. 名次勳章成就徽章展示 🥇</li>
+                    </ul>
+                </div>
+                <p class="text-[11px] text-slate-500 pt-3 border-t border-rose-100 font-medium">
+                    <i class="fa-solid fa-bullseye text-emerald-500 mr-1"></i> 目的：測試競賽與行銷宣傳活動動機。
+                </p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-rose-100/60 border-t border-rose-200/80 py-10 px-4 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto space-y-3">
+            <p class="font-cinzel text-rose-600 font-bold text-sm tracking-widest">THE TALE-WEAVER'S DICE</p>
+            <p>© 3D Story Dice Interactive Platform. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Customization Modal Light Theme -->
+    <div id="customModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel bg-white w-full max-w-xl rounded-3xl p-6 border border-rose-200 shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="flex items-center justify-between pb-4 border-b border-rose-100">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-rose-400"></i> 自訂當前骰子的六個面
+                </h3>
+                <button onclick="closeCustomModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-slate-500 my-3">
+                您可以自訂 6 個面的名稱、故事意涵以及 FontAwesome 圖示類別（例如 `fa-cloud-sun` 或 `fa-dragon`）。
+            </p>
+
+            <div id="customFacesContainer" class="flex-1 overflow-y-auto space-y-3 pr-2 my-2">
+                <!-- Custom inputs generated by JS -->
+            </div>
+
+            <div class="pt-4 border-t border-rose-100 flex justify-end space-x-3">
+                <button onclick="closeCustomModal()" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-slate-600 rounded-xl text-sm font-semibold transition">取消</button>
+                <button onclick="saveCustomFaces()" class="px-5 py-2 bg-gradient-to-r from-rose-400 to-pink-500 hover:opacity-95 text-white font-semibold rounded-xl text-sm shadow transition">儲存套用</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Light Theme -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-white border border-rose-300 text-slate-800 px-4 py-3 rounded-2xl shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center space-x-3">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-rose-500 text-lg"></i>
+        <span id="toastMsg" class="text-sm font-semibold">通知訊息</span>
+    </div>
+
+    <!-- Application Script Core -->
+    <script>
+        const PRESETS = {
+            weather: {
+                name: "天氣與自然",
+                faces: [
+                    { name: "晴天", icon: "fa-sun", textClass: "text-amber-500", hint: "象徵希望、陽光、開朗或平靜的開始。" },
+                    { name: "雨天", icon: "fa-cloud-showers-heavy", textClass: "text-blue-500", hint: "象徵轉折、憂傷、沉思或考驗。" },
+                    { name: "陰天", icon: "fa-cloud", textClass: "text-slate-400", hint: "象徵不確定、神秘、迷霧或等待。" },
+                    { name: "閃電暴風", icon: "fa-bolt-lightning", textClass: "text-yellow-400", hint: "象徵突發事件、衝突、危機或驚喜。" },
+                    { name: "飄雪", icon: "fa-snowflake", textClass: "text-cyan-300", hint: "象徵寧靜、孤獨、純潔或凍結。" },
+                    { name: "彩虹", icon: "fa-rainbow", textClass: "text-pink-400", hint: "象徵奇蹟、和解、圓滿或希望。" }
+                ]
+            },
+            fantasy: {
+                name: "奇幻冒險",
+                faces: [
+                    { name: "聖劍", icon: "fa-sword", textClass: "text-amber-400", hint: "代表勇氣、正義、戰鬥或果斷。" },
+                    { name: "魔法魔杖", icon: "fa-wand-magic-sparkles", textClass: "text-purple-400", hint: "代表奇蹟、秘密、智謀或奧秘。" },
+                    { name: "古老城堡", icon: "fa-chess-rook", textClass: "text-stone-300", hint: "代表庇護、傳統、目標或王國。" },
+                    { name: "惡龍", icon: "fa-dragon", textClass: "text-rose-500", hint: "代表強大敵人、內心恐懼或終極考驗。" },
+                    { name: "神秘鑰匙", icon: "fa-key", textClass: "text-yellow-500", hint: "代表解答、契機、封印或新門扉。" },
+                    { name: "寶藏", icon: "fa-gem", textClass: "text-emerald-400", hint: "代表回報、誘惑、價值或收穫。" }
+                ]
+            },
+            emotions: {
+                name: "情感與生活",
+                faces: [
+                    { name: "愛心", icon: "fa-heart", textClass: "text-rose-500", hint: "象徵關懷、絆、熱情或溫暖。" },
+                    { name: "靈感燈泡", icon: "fa-lightbulb", textClass: "text-amber-300", hint: "象徵突破、突然的點子、領悟。" },
+                    { name: "咖啡時光", icon: "fa-mug-hot", textClass: "text-amber-700", hint: "象徵放鬆、對話、休止符或省思。" },
+                    { name: "戲劇面具", icon: "fa-masks-theater", textClass: "text-indigo-400", hint: "象徵偽裝、秘密、演戲或雙重人格。" },
+                    { name: "時鐘", icon: "fa-clock", textClass: "text-sky-400", hint: "象徵緊迫時間、回憶、等待或契機。" },
+                    { name: "指針指南針", icon: "fa-compass", textClass: "text-teal-400", hint: "象徵方向、迷惘、抉擇或旅程。" }
+                ]
+            },
+            characters: {
+                name: "角色與遭遇",
+                faces: [
+                    { name: "幽靈", icon: "fa-ghost", textClass: "text-purple-300", hint: "象徵過去的陰影、未竟之事或驚嚇。" },
+                    { name: "貓頭鷹", icon: "fa-owl", textClass: "text-amber-600", hint: "象徵智慧、導師、夜間視線。" },
+                    { name: "外星人", icon: "fa-user-astronaut", textClass: "text-emerald-400", hint: "象徵未知、外來者、異域思維。" },
+                    { name: "機器人", icon: "fa-robot", textClass: "text-blue-400", hint: "象徵理性、冰冷邏輯、科技。" },
+                    { name: "偵探放大鏡", icon: "fa-magnifying-glass", textClass: "text-yellow-400", hint: "象徵探求真相、細節、疑惑。" },
+                    { name: "皇冠", icon: "fa-crown", textClass: "text-amber-400", hint: "象徵權力、榮譽、責任或傲慢。" }
+                ]
+            }
+        };
+
+        let currentThemeKey = "weather";
+        let activeFaces = [...PRESETS.weather.faces];
+        let diceCount = 3;
+        let isRolling = false;
+        let isSoundEnabled = true;
+
+        const faceRotations = [
+            { x: 0, y: 0 },
+            { x: 0, y: 180 },
+            { x: 0, y: -90 },
+            { x: 0, y: 90 },
+            { x: -90, y: 0 },
+            { x: 90, y: 0 }
+        ];
+
+        let currentDiceResults = [];
+        let audioCtx = null;
+
+        function playDiceRollSound() {
+            if (!isSoundEnabled) return;
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const now = audioCtx.currentTime;
+                const clickCount = 8;
+                for (let i = 0; i < clickCount; i++) {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(150 + Math.random() * 300, now + i * 0.12);
+                    
+                    gain.gain.setValueAtTime(0.15, now + i * 0.12);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.08);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(now + i * 0.12);
+                    osc.stop(now + i * 0.12 + 0.09);
+                }
+            } catch (e) {}
+        }
+
+        function toggleSound() {
+            isSoundEnabled = !isSoundEnabled;
+            const soundIcon = document.getElementById("soundIcon");
+            if (isSoundEnabled) {
+                soundIcon.className = "fa-solid fa-volume-high text-slate-300";
+                showToast("音效已開啟", "fa-volume-high");
+            } else {
+                soundIcon.className = "fa-solid fa-volume-xmark text-slate-500";
+                showToast("靜音模式", "fa-volume-xmark");
+            }
+        }
+
+        function renderDiceStage() {
+            const container = document.getElementById("diceGrid");
+            container.innerHTML = "";
+            currentDiceResults = [];
+
+            for (let i = 0; i < diceCount; i++) {
+                currentDiceResults.push(0);
+
+                const diceScene = document.createElement("div");
+                diceScene.className = "dice-scene";
+                
+                const cube = document.createElement("div");
+                cube.className = "cube";
+                cube.id = `cube-${i}`;
+                cube.setAttribute("onclick", `rollSingleDice(${i})`);
+
+                const faceClasses = ["face-front", "face-back", "face-right", "face-left", "face-top", "face-bottom"];
+                
+                faceClasses.forEach((faceClass, faceIdx) => {
+                    const faceData = activeFaces[faceIdx] || { name: `面${faceIdx+1}`, icon: "fa-question", textClass: "text-slate-600", hint: "" };
+                    const faceEl = document.createElement("div");
+                    faceEl.className = `cube-face ${faceClass}`;
+                    faceEl.innerHTML = `
+                        <i class="fa-solid ${faceData.icon} text-3xl sm:text-4xl ${faceData.textClass} mb-1"></i>
+                        <span class="text-[10px] sm:text-xs font-bold text-slate-700 tracking-wider">${faceData.name}</span>
+                    `;
+                    cube.appendChild(faceEl);
+                });
+
+                diceScene.appendChild(cube);
+                container.appendChild(diceScene);
+            }
+
+            updateResultDisplay();
+        }
+
+        function rollAllDice() {
+            if (isRolling) return;
+            isRolling = true;
+
+            playDiceRollSound();
+
+            const rollBtn = document.getElementById("rollBtn");
+            rollBtn.classList.add("opacity-75", "cursor-not-allowed");
+
+            for (let i = 0; i < diceCount; i++) {
+                rollDiceInstance(i);
+            }
+
+            setTimeout(() => {
+                isRolling = false;
+                rollBtn.classList.remove("opacity-75", "cursor-not-allowed");
+                updateResultDisplay();
+            }, 1500);
+        }
+
+        function rollSingleDice(index) {
+            if (isRolling) return;
+            isRolling = true;
+
+            playDiceRollSound();
+            rollDiceInstance(index);
+
+            setTimeout(() => {
+                isRolling = false;
+                updateResultDisplay();
+            }, 1500);
+        }
+
+        function rollDiceInstance(diceIdx) {
+            const cube = document.getElementById(`cube-${diceIdx}`);
+            if (!cube) return;
+
+            const targetFaceIdx = Math.floor(Math.random() * 6);
+            currentDiceResults[diceIdx] = targetFaceIdx;
+
+            const targetRot = faceRotations[targetFaceIdx];
+            const extraSpinsX = (Math.floor(Math.random() * 3) + 3) * 360;
+            const extraSpinsY = (Math.floor(Math.random() * 3) + 3) * 360;
+
+            cube.style.transform = `rotateX(${extraSpinsX + targetRot.x}deg) rotateY(${extraSpinsY + targetRot.y}deg)`;
+        }
+
+        function updateResultDisplay() {
+            const container = document.getElementById("resultCards");
+            container.innerHTML = "";
+
+            currentDiceResults.forEach((faceIdx, idx) => {
+                const face = activeFaces[faceIdx];
+                if (!face) return;
+
+                const card = document.createElement("div");
+                card.className = "bg-white border border-rose-200 p-3 rounded-xl flex items-center space-x-3 shadow-sm";
+                card.innerHTML = `
+                    <div class="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center flex-shrink-0 border border-rose-200">
+                        <i class="fa-solid ${face.icon} text-xl ${face.textClass}"></i>
+                    </div>
+                    <div class="overflow-hidden">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-slate-800">骰子 #${idx + 1}：${face.name}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 truncate">${face.hint}</p>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function setDiceCount(count) {
+            if (isRolling) return;
+            diceCount = count;
+
+            document.querySelectorAll(".dice-count-btn").forEach((btn, idx) => {
+                if (idx + 1 === count) {
+                    btn.className = "dice-count-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-400 text-white shadow-sm transition";
+                } else {
+                    btn.className = "dice-count-btn px-2.5 py-1 rounded-lg text-xs font-bold text-rose-500 hover:text-rose-700 transition";
+                }
+            });
+
+            renderDiceStage();
+        }
+
+        function openCustomModal() {
+            const container = document.getElementById("customFacesContainer");
+            container.innerHTML = "";
+
+            activeFaces.forEach((face, idx) => {
+                const item = document.createElement("div");
+                item.className = "bg-rose-50/50 p-3 rounded-xl border border-rose-200 flex flex-col gap-2";
+                item.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-rose-500">第 ${idx + 1} 面</span>
+                        <input type="text" id="custom-name-${idx}" value="${face.name}" placeholder="名稱" class="flex-1 bg-white text-xs text-slate-700 p-2 rounded-lg border border-rose-200 focus:outline-none focus:border-pink-400 shadow-sm">
+                        <input type="text" id="custom-icon-${idx}" value="${face.icon}" placeholder="FontAwesome Icon" class="w-32 bg-white text-xs text-slate-700 p-2 rounded-lg border border-rose-200 focus:outline-none focus:border-pink-400 shadow-sm">
+                    </div>
+                    <input type="text" id="custom-hint-${idx}" value="${face.hint}" placeholder="故事關鍵字與解讀意涵..." class="w-full bg-white text-xs text-slate-600 p-2 rounded-lg border border-rose-200 focus:outline-none focus:border-pink-400 shadow-sm">
+                `;
+                container.appendChild(item);
+            });
+
+            document.getElementById("customModal").classList.remove("hidden");
+        }
+
+        function closeCustomModal() {
+            document.getElementById("customModal").classList.add("hidden");
+        }
+
+        function saveCustomFaces() {
+            for (let i = 0; i < 6; i++) {
+                const name = document.getElementById(`custom-name-${i}`).value.trim() || `自訂面${i+1}`;
+                const icon = document.getElementById(`custom-icon-${i}`).value.trim() || `fa-star`;
+                const hint = document.getElementById(`custom-hint-${i}`).value.trim() || `自訂的故事元素。`;
+
+                activeFaces[i] = {
+                    name,
+                    icon,
+                    textClass: activeFaces[i]?.textClass || "text-indigo-400",
+                    hint
+                };
+            }
+
+            closeCustomModal();
+            renderDiceStage();
+            showToast("自訂骰子圖示設定成功！", "fa-check");
+        }
+
+        function showToast(msg, icon = "fa-circle-check") {
+            const toast = document.getElementById("toast");
+            const toastMsg = document.getElementById("toastMsg");
+            const toastIcon = document.getElementById("toastIcon");
+
+            toastMsg.textContent = msg;
+            toastIcon.className = `fa-solid ${icon} text-indigo-400 text-lg`;
+
+            toast.classList.remove("translate-y-20", "opacity-0");
+            toast.classList.add("translate-y-0", "opacity-100");
+
+            setTimeout(() => {
+                toast.classList.remove("translate-y-0", "opacity-100");
+                toast.classList.add("translate-y-20", "opacity-0");
+            }, 3000);
+        }
+
+        window.onload = function () {
+            setDiceCount(3);
+        };
+    </script>
+</body>
+</html>
